@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="FluidFinance // Expense Tracker",
+    page_title="Shri Finance // Expense Tracker",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
