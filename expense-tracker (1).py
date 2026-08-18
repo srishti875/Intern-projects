@@ -72,7 +72,7 @@ def write_data(data):
 # Load existing state data array
 expenses = read_data()
 
-st.title("FluidFinance // Expense Tracker")
+st.title("Shri Finance // Expense Tracker")
 st.markdown("---")
 
 # 3. Layout Grid Split
