@@ -1,9 +1,8 @@
-# expense-tracker.py
 import json
 import os
 import uuid
 import streamlit as st
-import streamlit.components.v1 as components
+import pandas as pd
 
 # 1. Page Configuration
 st.set_page_config(
@@ -14,8 +13,8 @@ st.set_page_config(
 
 DATA_FILE = "data.json"
 
-# FIXED: Removed the invalid parameter. unsafe_allow_html=True is the correct parameter.
-st.markdown("""
+# 2. Custom Styling (Using a separate variable name so we don't overwrite 'st')
+css_styles = """
     <style>
         .stApp {
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important;
@@ -49,9 +48,10 @@ st.markdown("""
             font-weight: 600 !important;
         }
     </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(css_styles, unsafe_allow_html=True)
 
-# 2. Local File Storage Management
+# 3. Local File Storage Management
 def init_storage():
     if not os.path.exists(DATA_FILE):
         with open(DATA_FILE, "w") as f:
@@ -75,7 +75,7 @@ expenses = read_data()
 st.title("Shri Finance // Expense Tracker")
 st.markdown("---")
 
-# 3. Layout Grid Split
+# 4. Layout Grid Split
 col_form, col_dash = st.columns([1.1, 1.9], gap="large")
 
 with col_form:
@@ -105,7 +105,7 @@ with col_form:
                 st.error("Please provide a valid description and amount.")
 
 with col_dash:
-    # Calculations Metrics Aggregation
+    # 5. Calculations Metrics Aggregation
     total_spend = sum(item["amount"] for item in expenses)
     total_items = len(expenses)
     
@@ -127,48 +127,22 @@ with col_dash:
         
     st.subheader("Allocation Breakdown")
     
-    # 4. Embedded HTML Chart Component safely passing serialized dynamic lists
-    chart_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <script src="https://jsdelivr.net"></script>
-        <style>
-            body {{ background: transparent; margin: 0; padding: 0; }}
-            .box {{ height: 180px; width: 100%; }}
-        </style>
-    </head>
-    <body>
-        <div class="box"><canvas id="strChart"></canvas></div>
-        <script>
-            const ctx = document.getElementById('strChart').getContext('2d');
-            new Chart(ctx, {{
-                type: 'bar',
-                data: {{
-                    labels: {list(categories_agg.keys())},
-                    datasets: [{{
-                        data: {list(categories_agg.values())},
-                        backgroundColor: ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#94a3b8'],
-                        borderRadius: 6
-                    }}]
-                }},
-                options: {{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {{ legend: {{ display: false }} }},
-                    scales: {{
-                        y: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#94a3b8' }} }},
-                        x: {{ grid: {{ display: false }}, ticks: {{ color: '#94a3b8' }} }}
-                    }}
-                }}
-            }});
-        </script>
-    </body>
-    </html>
-    """
-    components.html(chart_html, height=190)
+    # 6. Bar Chart Data Preparation
+    # Filter out categories with 0 amount so the chart looks clean
+    chart_data = {k: v for k, v in categories_agg.items() if v > 0}
+    
+    if chart_data:
+        # Convert to Pandas DataFrame
+        df = pd.DataFrame(list(chart_data.items()), columns=['Category', 'Amount'])
+        # Set Category as index for st.bar_chart
+        df = df.set_index('Category')
+        
+        # Render the native Streamlit bar chart (no HTML needed)
+        st.bar_chart(df, color="#6366f1", height=250)
+    else:
+        st.info("Add transactions to see the breakdown chart.")
 
-# 5. Ledger Interactive Data List Table 
+# 7. Ledger Interactive Data List Table 
 st.markdown("### Transaction Ledger")
 if not expenses:
     st.info("No transaction logs recorded yet.")
